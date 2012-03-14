@@ -441,7 +441,7 @@ def bootstrap_con_object(vm):
 
 class Con_Class(Con_Boxed_Object):
     __slots__ = ("supers", "fields_map", "fields", "new_func", "version", "dependents")
-    _immutable_fields = ("supers", "fields", "dependents", "version?")
+    _immutable_fields = ("supers", "fields", "dependents")
 
 
     def __init__(self, vm, name, supers, container, instance_of=None, new_func=None):
@@ -512,13 +512,11 @@ class Con_Class(Con_Boxed_Object):
 
 
     def find_field(self, vm, n):
-        jit.promote(self)
-        return self._get_field_i(vm, n, self.version)
+        return self._get_field_i(vm, n, jit.promote(self.version))
 
 
     def get_field(self, vm, n):
-        jit.promote(self)
-        o = self._get_field_i(vm, n, self.version)
+        o = self._get_field_i(vm, n, jit.promote(self.version))
         if o is None:
             vm.raise_helper("Field_Exception", [Con_String(vm, n), self])
         return o
