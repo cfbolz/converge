@@ -441,7 +441,7 @@ def bootstrap_con_object(vm):
 
 class Con_Class(Con_Boxed_Object):
     __slots__ = ("supers", "fields_map", "fields", "new_func", "version", "dependents")
-    _immutable_fields = ("supers", "fields", "dependents")
+    _immutable_fields = ("supers", "fields", "dependents", "version?")
 
 
     def __init__(self, vm, name, supers, container, instance_of=None, new_func=None):
@@ -512,11 +512,13 @@ class Con_Class(Con_Boxed_Object):
 
 
     def find_field(self, vm, n):
-        return self._get_field_i(vm, n, jit.promote(self.version))
+        jit.promote(self)
+        return self._get_field_i(vm, n, self.version)
 
 
     def get_field(self, vm, n):
-        o = self._get_field_i(vm, n, jit.promote(self.version))
+        jit.promote(self)
+        o = self._get_field_i(vm, n, self.version)
         if o is None:
             vm.raise_helper("Field_Exception", [Con_String(vm, n), self])
         return o
@@ -524,6 +526,8 @@ class Con_Class(Con_Boxed_Object):
 
     def set_field(self, vm, n, o):
         assert o is not None
+        # cfbolz: this is pointless: the jit does not look into this function,
+        # because it contains a loop.
         m = jit.promote(self.fields_map)
         i = m.find(n)
         if i == -1:
