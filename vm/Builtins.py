@@ -93,7 +93,13 @@ class Con_Object(Con_Thingy):
 
 
 class Version(object):
-    pass
+
+    def __init__(self, cls):
+        self.cls = cls
+
+    @jit.elidable_compatible()
+    def _get_field_i(self, vm, n):
+        return self.cls._get_field_i(vm, n)
 
 
 
@@ -448,7 +454,7 @@ class Con_Class(Con_Boxed_Object):
         # subclasses must be changed too. We maintain a list of all subclasses (even indirect ones!)
         # to do this.
         
-        self.version = Version()
+        self.version = Version(self)
         self.dependents = []
         sc_stack = supers[:]
         while len(sc_stack) > 0:
@@ -460,10 +466,8 @@ class Con_Class(Con_Boxed_Object):
         if container:
             self.set_slot(vm, "container", container)
 
-
-    @jit.elidable_promote("0")
-    def _get_field_i(self, vm, n, version):
-        m = jit.promote(self.fields_map)
+    def _get_field_i(self, vm, n):
+        m = self.fields_map
         i = m.find(n)
         if i != -1:
             return self.fields[i]
@@ -475,14 +479,12 @@ class Con_Class(Con_Boxed_Object):
                 return o
 
         return None
-
-
     def find_field(self, vm, n):
-        return self._get_field_i(vm, n, jit.promote(self.version))
+        return self.version._get_field_i(vm, n)
 
 
     def get_field(self, vm, n):
-        o = self._get_field_i(vm, n, jit.promote(self.version))
+        o = self.version._get_field_i(vm, n)
         if o is None:
             vm.raise_helper("Field_Exception", [Con_String(vm, n), self])
         return o
@@ -497,7 +499,7 @@ class Con_Class(Con_Boxed_Object):
             self.fields.append(o)
         else:
             self.fields[i] = o
-        self.version = Version()
+        self.version = Version(self)
         
         j = 0
         while j < len(self.dependents):
@@ -505,7 +507,7 @@ class Con_Class(Con_Boxed_Object):
             if dep is None:
                 del self.dependents[j]
                 continue
-            dep.version = Version()
+            dep.version = Version(self)
             j += 1
 
 
