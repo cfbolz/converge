@@ -110,7 +110,7 @@ class _Con_Map(object):
         self.other_maps = {}
 
 
-    @jit.elidable
+    @jit.elidable_compatible()
     def find(self, n):
         return self.index_map.get(n, -1)
 
@@ -145,8 +145,7 @@ class Con_Boxed_Object(Con_Object):
 
     def has_slot(self, vm, n):
         if self.slots is not None:
-            m = jit.promote(self.slots_map)
-            i = m.find(n)
+            i = self.slots_map.find(n)
             if i != -1:
                 return True
 
@@ -156,7 +155,7 @@ class Con_Boxed_Object(Con_Object):
     def find_slot(self, vm, n):
         o = None
         if self.slots is not None:
-            m = jit.promote(self.slots_map)
+            m = self.slots_map
             i = m.find(n)
             if i != -1:
                 o = self.slots[i]
@@ -178,7 +177,7 @@ class Con_Boxed_Object(Con_Object):
     def get_slot(self, vm, n):
         o = None
         if self.slots is not None:
-            m = jit.promote(self.slots_map)
+            m = self.slots_map
             i = m.find(n)
             if i != -1:
                 o = self.slots[i]
@@ -200,7 +199,7 @@ class Con_Boxed_Object(Con_Object):
 
     def set_slot(self, vm, n, o):
         assert o is not None
-        m = jit.promote(self.slots_map)
+        m = self.slots_map
         if self.slots is not None:
             i = m.find(n)
             if i == -1:
